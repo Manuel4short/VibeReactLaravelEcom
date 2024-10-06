@@ -22,7 +22,7 @@ function UpdateProduct() {
                 setDescription(data.description);
                 setImageUrl(`http://localhost:8000/${data.file_path}`);
             } catch (error) {
-                console.error("Error fetching product data:", error);
+                console.error("Error fetching product ", error);
             }
         }
         fetchData();
