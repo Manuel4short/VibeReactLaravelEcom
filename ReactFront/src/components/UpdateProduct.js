@@ -63,6 +63,7 @@ function UpdateProduct() {
             <Header />
             <div className="container">
                 <h1>Update Product</h1>
+                <p>This is the Update Product page!</p>
                 <form onSubmit={handleSubmit}>
                     <input type='text' value={name} onChange={(e) => setName(e.target.value)} /> <br /><br />
                     <input type='text' value={price} onChange={(e) => setPrice(e.target.value)} /> <br /><br />
