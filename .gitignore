@@ -1,0 +1,14 @@
+# General
+node_modules/
+.env
+.aider*
+
+# Laravel-specific
+vendor/
+.idea/
+storage/app/public
+
+
+
+# React-specific
+build/
