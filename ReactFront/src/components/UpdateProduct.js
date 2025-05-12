@@ -25,21 +25,37 @@ function UpdateProduct() {
   }, []);
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
+  
+    if (selectedFile) {
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        setImageUrl(reader.result); // Set the preview image URL
+      };
+      reader.readAsDataURL(selectedFile); // Convert the file to a data URL for preview
+    }
   };
+  
 
   const handleProductChange = (e) => {
-    setProductId(e.target.value);
-    const selectedProduct = data.find((product) => product.id === parseInt(e.target.value));
-    setName(selectedProduct.name);
-    setPrice(selectedProduct.price);
-    setDescription(selectedProduct.description);
-    setImageUrl(`http://localhost:8000/storage/${selectedProduct.file_path}`);
+    const selectedId = parseInt(e.target.value);
+    setProductId(selectedId);
+    const selectedProduct = data.find((product) => product.id === selectedId);
+    if (selectedProduct) {
+      setName(selectedProduct.name || '');
+      setPrice(selectedProduct.price || '');
+      setDescription(selectedProduct.description || '');
+      setImageUrl(`http://localhost:8000/storage/${selectedProduct.file_path}`);
+    }
   };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
+    formData.append('_method', 'PUT');  // Add this line
     formData.append('name', name);
     formData.append('price', price);
     formData.append('description', description);
@@ -48,10 +64,20 @@ function UpdateProduct() {
     }
   
     try {
-      const response = await axios.put(`http://localhost:8000/api/product/${productId}`, formData);
+      const response = await axios.post(`http://localhost:8000/api/product/${productId}`, formData, {  // Use POST instead of PUT
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       if (response.status === 200) {
-        console.log('Product updated successfully!');
-        window.location.reload(); // Reload the page after update
+        const updatedProduct = response.data.product;
+        setImageUrl(`http://localhost:8000/storage/${updatedProduct.file_path}`);
+        setData((prevData) =>
+          prevData.map((prod) =>
+            prod.id === updatedProduct.id ? updatedProduct : prod
+          )
+        );
+        alert('Product updated successfully!');
       } else {
         console.error('Error updating product:', response.status);
       }
@@ -59,20 +85,22 @@ function UpdateProduct() {
       console.error('Error updating product:', error);
     }
   };
+  
 
   return (
     <>
       <Header />
       <div className="container mt-3">
-        <h3 className="text-center mb-3">Update Product</h3>
-        <form onSubmit={handleSubmit} className="border p-3 rounded shadow mx-auto mb-4" style={{ maxWidth: '400px' }}>
-          <div className="mb-3">
-            <label htmlFor="product-select" className="form-label">Select Product</label>
+        <h3 className="text-center mb-2" style={{ fontSize: '1.5rem' }}>Update Product</h3>
+        <form onSubmit={handleSubmit} className="border p-2 rounded shadow mx-auto mb-4" style={{ maxWidth: '350px' }}>
+          <div className="mb-2">
+            <label htmlFor="product-select" className="form-label" style={{ fontSize: '0.9rem' }}>Select Product</label>
             <select
               id="product-select"
               className="form-select"
               value={productId}
               onChange={handleProductChange}
+              style={{ fontSize: '0.9rem' }}
             >
               <option value="">Select a product</option>
               {data.map((product) => (
@@ -80,8 +108,8 @@ function UpdateProduct() {
               ))}
             </select>
           </div>
-          <div className="mb-3">
-            <label htmlFor="product-name" className="form-label">Product Name</label>
+          <div className="mb-2">
+            <label htmlFor="product-name" className="form-label" style={{ fontSize: '0.9rem' }}>Product Name</label>
             <input
               id="product-name"
               type="text"
@@ -90,10 +118,11 @@ function UpdateProduct() {
               className="form-control"
               placeholder="Enter product name"
               required
+              style={{ fontSize: '0.9rem' }}
             />
           </div>
-          <div className="mb-3">
-            <label htmlFor="product-price" className="form-label">Price</label>
+          <div className="mb-2">
+            <label htmlFor="product-price" className="form-label" style={{ fontSize: '0.9rem' }}>Price</label>
             <input
               id="product-price"
               type="text"
@@ -102,10 +131,11 @@ function UpdateProduct() {
               className="form-control"
               placeholder="Enter price"
               required
+              style={{ fontSize: '0.9rem' }}
             />
           </div>
-          <div className="mb-3">
-            <label htmlFor="product-description" className="form-label">Description</label>
+          <div className="mb-2">
+            <label htmlFor="product-description" className="form-label" style={{ fontSize: '0.9rem' }}>Description</label>
             <textarea
               id="product-description"
               value={description}
@@ -113,19 +143,29 @@ function UpdateProduct() {
               className="form-control"
               placeholder="Enter description"
               required
+              style={{ fontSize: '0.9rem', height: '80px' }}
             />
           </div>
-          <div className="mb-3">
-            <label htmlFor="product-file" className="form-label">Upload Image</label>
+          <div className="mb-2">
+            <label htmlFor="product-file" className="form-label" style={{ fontSize: '0.9rem' }}>Upload Image</label>
             <input
               id="product-file"
               type="file"
               onChange={handleFileChange}
               className="form-control"
+              style={{ fontSize: '0.9rem' }}
             />
           </div>
-          {imageUrl && <img className="img-thumbnail mb-3" src={imageUrl} alt="product" />}
-          <button type="submit" className="btn btn-primary w-100">Update Product</button>
+          {imageUrl && (
+                  <img
+                    className="img-thumbnail mb-2"
+                    src={imageUrl}
+                    alt="product"
+                    style={{ width: '150px', marginTop: '5px' }} 
+                  />
+                )}
+
+          <button type="submit" className="btn btn-primary w-100" style={{ fontSize: '0.9rem' }}>Update Product</button>
         </form>
       </div>
     </>

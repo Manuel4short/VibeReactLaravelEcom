@@ -1,7 +1,7 @@
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 
-function Header({ cartCount, cart }) { // Accept cart as a prop alongside cartCount
+function Header({ cartCount, cart }) {
   let user = JSON.parse(localStorage.getItem('user-info'));
   const navigate = useNavigate();
 
@@ -13,42 +13,53 @@ function Header({ cartCount, cart }) { // Accept cart as a prop alongside cartCo
   return (
     <div className="login">
       <Navbar bg="light" expand="lg">
-        <Container>
-          <Navbar.Brand href="/">E-Commerce Store</Navbar.Brand>
+        <Container fluid>
+          {/* Website Name */}
+          <Navbar.Brand href="/" >E-Commerce Store</Navbar.Brand>
+
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
+
           <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="me-auto Navbar_wrapper">
-              {localStorage.getItem('user-info') ? (
-                <>
-                  <Link to="/">Product List</Link>
-                  <Link to="/add">Add Product</Link>
-                  <Link to="/update">Update Products</Link>
-                  <Link to="/search">Search Products</Link>
-                </>
-              ) : (
-                <>
-                  <Link to="/login">Login</Link>
-                  <Link to="/register">Register</Link>
-                </>
-              )}
-            </Nav>
-            {localStorage.getItem('user-info') ? (
-              <Nav className="ml-auto d-flex align-items-center">
-                <span className="navbar-text mr-3">{user && user.name}</span>
-                <Nav.Link onClick={logOut} className="btn btn-outline-danger">
-                  Logout
+            {/* Single Nav Container for Proper Spacing */}
+            <Nav className="w-100 d-flex justify-content-between align-items-center">
+
+              {/* Left-side Links */}
+              <div className="d-flex align-items-center  ms-5 ps-5">
+                <Nav.Link as={Link} to="/" className="me-3">Product List</Nav.Link>
+
+                {/* Admin Links */}
+                {user && user.role === "admin" && (
+                  <>
+                    <Nav.Link as={Link} to="/add" className="me-3">Add Product</Nav.Link>
+                    <Nav.Link as={Link} to="/update" className="me-3">Update Products</Nav.Link>
+                  </>
+                )}
+
+                <Nav.Link as={Link} to="/search" className="me-3">Search Products</Nav.Link>
+              </div>
+
+              {/* Right-side: User & Cart */}
+              <div className="d-flex align-items-center">
+                {user ? (
+                  <>
+                    <span className="navbar-text me-3">Welcome, {user.name}</span>
+                    <Nav.Link onClick={logOut} className="btn btn-outline-danger me-3">
+                      Logout
+                    </Nav.Link>
+                  </>
+                ) : (
+                  <>
+                    <Nav.Link as={Link} to="/login" className="me-3">Login</Nav.Link>
+                    <Nav.Link as={Link} to="/register" className="me-3">Register</Nav.Link>
+                  </>
+                )}
+
+                {/* Cart Button */}
+                <Nav.Link as={Link} to="/cart" className="btn btn-primary">
+                  Cart ({cartCount})
                 </Nav.Link>
-              </Nav>
-            ) : null}
-            {/* Pass cart state to the Cart page */}
-            <Nav className="ml-auto">
-              <Link
-                to="/cart"
-                className="btn btn-primary"
-                state={{ cart }} // Pass cart as state
-              >
-                Cart ({cartCount})
-              </Link>
+              </div>
+
             </Nav>
           </Navbar.Collapse>
         </Container>

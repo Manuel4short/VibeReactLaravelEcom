@@ -29,7 +29,9 @@ function SearchProduct() {
                     onChange={(e) => search(e.target.value)}
                     className='form-control'
                     placeholder='Search for a product'
-                />
+                    style={{ width: '50%' }}  // Adjust width as needed
+                    />
+
                 <CardGroup className="mt-3">
                     {data.length === 0 ? (
                         <p>No products to display</p>

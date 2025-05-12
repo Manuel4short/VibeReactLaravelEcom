@@ -29,8 +29,7 @@ Route::get('list', [ProductController::class ,'list'] );
 
 Route::delete('delete/{id}', [ProductController::class ,'delete'] );
 
-Route::get('product/{id}', [ProductController::class ,'getProduct'] );
-
 Route::get('search/{key}', [ProductController::class ,'searchProduct'] );
 
-Route::put('/api/product/{id}', [ProductController::class, 'update']);
+Route::get('product/{id}', [ProductController::class ,'getProduct'] );
+Route::put('product/{id}', [ProductController::class, 'update']);

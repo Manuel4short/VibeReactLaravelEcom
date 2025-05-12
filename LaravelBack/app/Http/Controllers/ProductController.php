@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
+
 
 class ProductController extends Controller
 {
@@ -109,33 +111,41 @@ class ProductController extends Controller
             return response()->json(['message' => 'Internal Server Error', 'error' => $e->getMessage()], 500);
         }
     }
-
     public function update(Request $request, $id)
     {
-        $product = Product::find($id);
+        try {
+            $product = Product::findOrFail($id);
     
-        if ($product) {
-            // Only update fields that are provided in the request
+            $request->validate([
+                'name' => 'sometimes|required|string|max:255',
+                'price' => 'sometimes|required|numeric',
+                'description' => 'nullable|string',
+                'file' => 'sometimes|file|mimes:jpg,jpeg,png|max:2048',
+            ]);
+    
+            // Update fields
             $product->name = $request->input('name', $product->name);
             $product->price = $request->input('price', $product->price);
             $product->description = $request->input('description', $product->description);
     
-            // If a new file (image) is uploaded, handle it
+            // Handle file upload
             if ($request->hasFile('file')) {
                 $file = $request->file('file');
                 $filename = time() . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('public', $filename);
-                $product->file_path = $filename;
+                $file->storeAs('public/products', $filename);
+                $product->file_path = "products/$filename";
             }
     
-            $product->save(); // Save the updated product
+            $product->save();
+            // Log the updated product for debugging
+            Log::info('Updated Product:', $product->toArray());
     
-            return response()->json(['message' => 'Product updated successfully!']);
-        } else {
-            return response()->json(['message' => 'Product not found!'], 404);
+            return response()->json(['message' => 'Product updated successfully!', 'product' => $product]);
+        } catch (\Exception $e) {
+            \Log::error('Error updating product:', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Error updating product.'], 500);
         }
     }
-    
     
 }
 

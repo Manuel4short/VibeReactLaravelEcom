@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import ReactDOM from 'react-dom';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -15,7 +15,7 @@ import Cart from './components/Cart';
 import Protected from './components/Protected';
 
 function App() {
-  const [cart, setCart] = useState([]); // Cart state
+  const [cart, setCart] = React.useState([]);
 
   return (
     <BrowserRouter>
@@ -24,13 +24,15 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/cart" element={<Cart cart={cart} setCart={setCart} />} />
-        <Route path="/add" element={<AddProduct />} />
-        <Route path="/update/:id?" element={<UpdateProduct />} />
+        <Route path="/add" element={<Protected adminRequired={true}><AddProduct /></Protected>} />
+        <Route path="/update/:id?" element={<Protected adminRequired={true}><UpdateProduct /></Protected>} />
         <Route path="/search" element={<SearchProduct />} />
       </Routes>
     </BrowserRouter>
   );
 }
 
-ReactDOM.render(<App />, document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+
 reportWebVitals();

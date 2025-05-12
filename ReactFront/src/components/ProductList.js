@@ -53,19 +53,22 @@ function ProductList() {
     if (data.length === 0) return <div className="text-center mt-5">No products available.</div>;
 
     return (
-        <div className="container mt-4">
+        <div className="container-fluid ">
             {/* Pass cart count to Header */}
             <Header cartCount={cart.length} cart={cart}/>
-            <h4 className="text-center mb-4">Products Listed Here</h4>
+            <h4 className="text-center mb-4" style={{ fontStyle: "italic" }}>
+  Products Listed Here
+</h4>
+
             <div className="row">
                 {data.map((dataitem) => (
-                    <div className="col-md-4 mb-4" key={dataitem.id}>
+                    <div className="col-lg-4 col-md-4 col-sm-6 col-12 mb-5" key={dataitem.id}>
                         <div className="card shadow-sm">
                             <img
-                                className="card-img-top"
+                                className="card-img-top "
                                 src={`http://localhost:8000/storage/${dataitem.file_path}`}
                                 alt={dataitem.name}
-                                style={{ height: '200px', objectFit: 'contain', width: '100%' }}
+                                style={{ height: '200px', objectFit: 'contain', width: '100%' , paddingTop: '10px' }} 
                             />
                             <div className="card-body">
                                 <h5 className="card-title">{dataitem.name}</h5>

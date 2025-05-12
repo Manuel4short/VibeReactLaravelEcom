@@ -11,6 +11,7 @@
 
 
     <div class="product-image">
+
         <p>the image displays</p>
         <img src="{{ asset('storage/products/Nymy77EQ0sxpNKSl5leqeqhDQFXu2L2Noqwprzas.jpg') }}" alt="Product Image">
     </div>
@@ -21,5 +22,6 @@
         // $pathFromDatabase = 'products/Oq1i9bj4OV9TRfbpqpLQMyojjv5fvJd3snCy4S1Q.png';
         // $fullPath = public_path($pathFromDatabase);
         // echo '<p>Full path of the image: '.$fullPath.'</p>';
+        
         
     ?>
