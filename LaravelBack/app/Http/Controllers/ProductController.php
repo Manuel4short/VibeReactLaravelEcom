@@ -54,8 +54,12 @@ class ProductController extends Controller
     public function list()
     {
         // Retrieve all products from the database
-        $products = Product::all();
-
+        $products = Product::all()->map(function($product) {
+            // Add the full URL to the image path
+            $product->image_url = $product->file_path ? asset('storage/' . $product->file_path) : null;
+            return $product;
+        });
+    
         // Return the products as a JSON response
         return response()->json($products);
     }
