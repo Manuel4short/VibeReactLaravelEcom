@@ -1,5 +1,5 @@
-import React from 'react';
-import { useLocation } from 'react-router-dom';
+import React from "react";
+import { useLocation } from "react-router-dom";
 
 function Cart() {
   const location = useLocation();
@@ -18,9 +18,11 @@ function Cart() {
             <div className="card shadow-sm">
               <img
                 className="card-img-top"
-                src={`http://localhost:8000/storage/${item.file_path}`}
+                src={`${
+                  process.env.REACT_APP_API_URL || "http://localhost:8000"
+                }/storage/${item.file_path}`}
                 alt={item.name}
-                style={{ height: '200px', objectFit: 'contain', width: '100%' }}
+                style={{ height: "200px", objectFit: "contain", width: "100%" }}
               />
               <div className="card-body">
                 <h5 className="card-title">{item.name}</h5>
