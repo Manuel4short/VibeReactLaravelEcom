@@ -4,12 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "vite",
     "start": "react-scripts start",
+    "build": "react-scripts build",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint -c eslint.config.mjs src/**/*.{js,jsx,mjs,json,html} --fix",
-    "eject": "react-scripts eject",
-    "build": "react-scripts build"
+    "lint": "eslint . --fix",
+    "eject": "react-scripts eject"
   },
   "keywords": [],
   "author": "",
@@ -27,32 +26,29 @@
     ]
   },
   "dependencies": {
-    "@craco/craco": "^7.1.0",
-    "axios": "^1.7.9",
-    "bootstrap": "^5.3.3",
+    "axios": "^1.11.0",
+    "bootstrap": "^5.3.7",
     "prop-types": "^15.8.1",
-    "react": "^19.0.0",
-    "react-bootstrap": "^2.10.9",
-    "react-dom": "^19.0.0",
+    "react": "^18.2.0",
+    "react-bootstrap": "^2.10.10",
+    "react-dom": "^18.2.0",
     "react-router-bootstrap": "^0.26.3",
-    "react-router-dom": "^7.1.5",
+    "react-router-dom": "^7.7.1",
     "react-scripts": "^5.0.1",
     "web-vitals": "^4.2.4"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "^7.26.8",
-    "@eslint/js": "^9.20.0",
+    "@babel/eslint-parser": "^7.28.0",
+    "@eslint/js": "^9.32.0",
     "@typescript-eslint/eslint-plugin": "8.24.0",
     "@typescript-eslint/parser": "8.24.0",
-    "@vitejs/plugin-react": "^4.3.4",
-    "eslint": "^9.20.1",
+    "eslint": "^8.57.0",
     "eslint-config-react-app": "^7.0.1",
-    "eslint-plugin-jest": "^28.11.0",
-    "eslint-plugin-react": "^7.37.4",
-    "globals": "^15.14.0",
+    "eslint-plugin-jest": "^28.14.0",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^15.15.0",
     "jest": "^29.7.0",
-    "typescript-eslint": "^8.24.0",
-    "vite": "^6.2.3"
+    "typescript-eslint": "^8.39.0"
   },
   "overrides": {
     "react-scripts": "5.0.1"
