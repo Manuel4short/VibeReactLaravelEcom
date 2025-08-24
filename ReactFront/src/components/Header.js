@@ -15,7 +15,7 @@ function Header({ cartCount, cart }) {
       <Navbar bg="light" expand="lg">
         <Container fluid>
           {/* Website Name */}
-          <Navbar.Brand href="/">E-Commerce Store</Navbar.Brand>
+          <Navbar.Brand href="/">E-com Digital</Navbar.Brand>
 
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
 

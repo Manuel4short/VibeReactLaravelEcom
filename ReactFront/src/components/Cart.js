@@ -1,9 +1,8 @@
 import React from "react";
-import { useLocation } from "react-router-dom";
+import { useCart } from "../CartContext"; // adjust path
 
 function Cart() {
-  const location = useLocation();
-  const cart = location.state?.cart || []; // Retrieve the cart state
+  const { cart, removeFromCart, clearCart } = useCart();
 
   if (cart.length === 0) {
     return <div className="text-center mt-5">Your cart is empty.</div>;
@@ -18,10 +17,7 @@ function Cart() {
             <div className="card shadow-sm">
               <img
                 className="card-img-top"
-                // src={`${
-                //   process.env.REACT_APP_API_URL || "http://localhost:8000"
-                // }/storage/${item.file_path}`}
-                src={item.image_url}
+                src={`http://localhost:8000/storage/${item.file_path}`}
                 alt={item.name}
                 style={{ height: "200px", objectFit: "contain", width: "100%" }}
               />
@@ -31,11 +27,20 @@ function Cart() {
                 <p className="card-text">
                   <strong>${item.price * item.quantity}</strong>
                 </p>
+                <button
+                  className="btn btn-danger w-100"
+                  onClick={() => removeFromCart(item.id)}
+                >
+                  Remove
+                </button>
               </div>
             </div>
           </div>
         ))}
       </div>
+      <button className="btn btn-warning mt-3" onClick={clearCart}>
+        Clear Cart
+      </button>
     </div>
   );
 }

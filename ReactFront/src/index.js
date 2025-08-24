@@ -15,21 +15,20 @@ import Cart from "./components/Cart";
 import Protected from "./components/Protected";
 import Header from "./components/Header";
 
+import { CartProvider } from "./CartContext"; // 👈 import your context provider
+import { useCart } from "./CartContext"; // 👈 to read cart count in header
+
 function App() {
-  const [cart, setCart] = React.useState([]);
+  const { cart } = useCart(); // 👈 get cart from context
 
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Header cartCount={cart.length} />}>
-          <Route
-            index
-            element={<ProductList cart={cart} setCart={setCart} />}
-          />
-
+          <Route index element={<ProductList />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
-          <Route path="cart" element={<Cart cart={cart} setCart={setCart} />} />
+          <Route path="cart" element={<Cart />} />
           <Route
             path="add"
             element={
@@ -54,6 +53,10 @@ function App() {
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App />);
+root.render(
+  <CartProvider>
+    <App />
+  </CartProvider>
+);
 
 reportWebVitals();
