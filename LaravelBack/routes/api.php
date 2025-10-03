@@ -32,4 +32,7 @@ Route::delete('delete/{id}', [ProductController::class ,'delete'] );
 Route::get('search/{key}', [ProductController::class ,'searchProduct'] );
 
 Route::get('product/{id}', [ProductController::class ,'getProduct'] );
-Route::put('product/{id}', [ProductController::class, 'update']);
+Route::post('product/{id}', [ProductController::class, 'update']);
+// Route::match(['put', 'post'], 'product/{id}', [ProductController::class, 'update']);
+
+Route::post('/product/preview', [ProductController::class, 'generatePreview']);

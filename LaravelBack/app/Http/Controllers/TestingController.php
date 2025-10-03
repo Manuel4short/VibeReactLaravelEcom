@@ -1,5 +1,5 @@
 <?php
-class Testingblade extends Controller
+class TestingController  extends Controller
 {
 public function  show($id)
 

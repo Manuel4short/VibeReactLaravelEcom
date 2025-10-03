@@ -26,14 +26,15 @@ function UpdateProduct() {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     setFile(selectedFile);
-
     if (selectedFile) {
       const reader = new FileReader();
-
-      reader.onloadend = () => {
-        setImageUrl(reader.result); // Set the preview image URL
-      };
-      reader.readAsDataURL(selectedFile); // Convert the file to a data URL for preview
+      // Only generate preview for images (jpg, jpeg, png, webp), not pdf or others
+      if (selectedFile.type.startsWith("image/")) {
+        reader.onloadend = () => setImageUrl(reader.result);
+        reader.readAsDataURL(selectedFile);
+      } else {
+        setImageUrl(""); // Clear preview for non-image files (e.g., pdf, epub, mobi)
+      }
     }
   };
 
@@ -45,27 +46,27 @@ function UpdateProduct() {
       setName(selectedProduct.name || "");
       setPrice(selectedProduct.price || "");
       setDescription(selectedProduct.description || "");
-      setImageUrl(`http://localhost:8000/storage/${selectedProduct.file_path}`);
+      setImageUrl(
+        selectedProduct.file_path
+          ? `http://localhost:8000/storage/${selectedProduct.file_path}`
+          : ""
+      );
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    formData.append("_method", "PUT"); // Add this line
     formData.append("name", name);
     formData.append("price", price);
     formData.append("description", description);
-    if (file) {
-      formData.append("file", file);
-    }
+    if (file) formData.append("file", file);
 
     try {
       const response = await axios.post(
         `http://localhost:8000/api/product/${productId}`,
         formData,
         {
-          // Use POST instead of PUT
           headers: {
             "Content-Type": "multipart/form-data",
           },
@@ -73,9 +74,19 @@ function UpdateProduct() {
       );
       if (response.status === 200) {
         const updatedProduct = response.data.product;
-        setImageUrl(
-          `http://localhost:8000/storage/${updatedProduct.file_path}`
-        );
+        // Update imageUrl only if the updated file is an image
+        if (
+          updatedProduct.file_path.endsWith(".jpg") ||
+          updatedProduct.file_path.endsWith(".jpeg") ||
+          updatedProduct.file_path.endsWith(".png") ||
+          updatedProduct.file_path.endsWith(".webp")
+        ) {
+          setImageUrl(
+            `http://localhost:8000/storage/${updatedProduct.file_path}`
+          );
+        } else {
+          setImageUrl(""); // Clear for PDF or other non-image files
+        }
         setData((prevData) =>
           prevData.map((prod) =>
             prod.id === updatedProduct.id ? updatedProduct : prod
@@ -153,7 +164,8 @@ function UpdateProduct() {
             </label>
             <input
               id="product-price"
-              type="text"
+              type="number"
+              step="0.01"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               className="form-control"
@@ -176,7 +188,6 @@ function UpdateProduct() {
               onChange={(e) => setDescription(e.target.value)}
               className="form-control"
               placeholder="Enter description"
-              required
               style={{ fontSize: "0.9rem", height: "80px" }}
             />
           </div>
@@ -186,7 +197,7 @@ function UpdateProduct() {
               className="form-label"
               style={{ fontSize: "0.9rem" }}
             >
-              Upload Image
+              Upload Product (JPEG, PNG, WebP, PDF)
             </label>
             <input
               id="product-file"
@@ -194,6 +205,7 @@ function UpdateProduct() {
               onChange={handleFileChange}
               className="form-control"
               style={{ fontSize: "0.9rem" }}
+              accept=".jpg,.jpeg,.png,.webp,.pdf"
             />
           </div>
           {imageUrl && (
@@ -209,6 +221,7 @@ function UpdateProduct() {
             type="submit"
             className="btn btn-primary w-100"
             style={{ fontSize: "0.9rem" }}
+            disabled={!productId || !name || !price}
           >
             Update Product
           </button>

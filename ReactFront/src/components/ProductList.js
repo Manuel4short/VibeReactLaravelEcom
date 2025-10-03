@@ -44,7 +44,9 @@ function ProductList() {
             <div className="card shadow-sm">
               <img
                 className="card-img-top "
-                src={`http://localhost:8000/storage/${dataitem.file_path}`}
+                src={`http://localhost:8000/storage/${
+                  dataitem.preview_image || dataitem.file_path
+                }`}
                 alt={dataitem.name}
                 style={{
                   height: "200px",
@@ -52,6 +54,7 @@ function ProductList() {
                   width: "100%",
                   paddingTop: "10px",
                 }}
+                onError={(e) => (e.target.src = "/default.png")}
               />
               <div className="card-body">
                 <h5 className="card-title">{dataitem.name}</h5>

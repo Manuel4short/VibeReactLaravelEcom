@@ -6,51 +6,86 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Spatie\PdfToImage\Pdf; // ← ADD THIS
+use Illuminate\Support\Facades\Storage; // ← ADD THIS
 
 
 class ProductController extends Controller
 {
-    public function addProduct(Request $request)
+   public function addProduct(Request $request)
     {
-        // Added validation
+        // Validation
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'price' => 'required|numeric',
+            'price' => 'required|numeric|min:0|max:99999999.99',
             'description' => 'nullable|string',
-            'file' => 'required|file|mimes:jpg,jpeg,png|max:2048'
+            'file' => 'required|file|mimes:jpg,jpeg,pjpeg,png,pdf|max:5120'
         ]);
 
-        // If validation fails, return errors
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
         try {
-            // Check if the file is present
             if ($request->hasFile('file')) {
-                // Store the file and get the path
-                $filePath = $request->file('file')->store('products', 'public');
+                $file = $request->file('file');
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime = finfo_file($finfo, $file->getPathname());
+                finfo_close($finfo);
 
-                // Save the product to the database
+                // Generate unique filename
+                $originalFilename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $filePath = $file->storeAs('products', $originalFilename, 'public');
+
+                // Log file storage
+                Log::info('File stored:', [
+                    'filename' => $originalFilename,
+                    'path' => $filePath,
+                    'mime' => $mime
+                ]);
+
+                // Save product to database
                 $product = new Product;
                 $product->name = $request->input('name');
                 $product->price = $request->input('price');
                 $product->description = $request->input('description');
-                $product->file_path = $filePath;
+                $product->file_path = 'products/' . $originalFilename;
+
+                // Convert PDF to image if it's a PDF
+                if ($mime === 'application/pdf') {
+                    try {
+                        $previewImage = $this->convertPdfToImage($file, $originalFilename, 'products');
+                        $product->preview_image = 'products/' . $previewImage;
+                    } catch (\Exception $e) {
+                        Log::error('PDF conversion failed, proceeding with save:', [
+                            'error' => $e->getMessage(),
+                            'file' => $originalFilename
+                        ]);
+                        $product->preview_image = null; // Save without preview if conversion fails
+                    }
+                } else {
+                    $product->preview_image = null;
+                }
+
                 $product->save();
+
+                Log::info('Product saved:', $product->toArray());
 
                 return response()->json(['message' => 'Product added successfully', 'product' => $product], 201);
             } else {
-                // Return error if file upload fails
                 return response()->json(['message' => 'File upload failed'], 400);
             }
         } catch (\Exception $e) {
-            \Log::error('Error:', ['exception' => $e]);
-            // Catch any exceptions and return a 500 error
+            Log::error('Error in addProduct:', [
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json(['message' => 'Internal Server Error', 'error' => $e->getMessage()], 500);
         }
     }
-
     public function list()
     {
         return response()->json(Product::all());
@@ -108,41 +143,158 @@ class ProductController extends Controller
             return response()->json(['message' => 'Internal Server Error', 'error' => $e->getMessage()], 500);
         }
     }
-    public function update(Request $request, $id)
-    {
-        try {
-            $product = Product::findOrFail($id);
     
-            $request->validate([
-                'name' => 'sometimes|required|string|max:255',
-                'price' => 'sometimes|required|numeric',
-                'description' => 'nullable|string',
-                'file' => 'sometimes|file|mimes:jpg,jpeg,png|max:2048',
-            ]);
-    
-            // Update fields
-            $product->name = $request->input('name', $product->name);
-            $product->price = $request->input('price', $product->price);
-            $product->description = $request->input('description', $product->description);
-    
-            // Handle file upload
-            if ($request->hasFile('file')) {
-                $file = $request->file('file');
-                $filename = time() . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('public/products', $filename);
-                $product->file_path = "products/$filename";
-            }
-    
-            $product->save();
-            // Log the updated product for debugging
-            Log::info('Updated Product:', $product->toArray());
-    
-            return response()->json(['message' => 'Product updated successfully!', 'product' => $product]);
-        } catch (\Exception $e) {
-            \Log::error('Error updating product:', ['error' => $e->getMessage()]);
-            return response()->json(['message' => 'Error updating product.'], 500);
+   public function update(Request $request, $id)
+{
+    try {
+        $product = Product::findOrFail($id);
+        Log::info('Received request data:', $request->all());
+
+        // Define validator before use
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|required|string|max:255',
+            'price' => 'sometimes|required|numeric|min:0|max:99999999.99',
+            'description' => 'nullable|string',
+            'file' => 'sometimes|file|mimes:jpg,jpeg,png,pdf|max:5120'
+        ]);
+
+        // Check if validation fails
+        if ($validator->fails()) {
+            Log::error('Validation failed:', ['errors' => $validator->errors()]);
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
         }
+
+        // Handle file upload
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $file->getPathname());
+            finfo_close($finfo);
+            Log::info('File details:', ['mime' => $mime, 'size' => $file->getSize(), 'original_name' => $file->getClientOriginalName()]);
+
+            // Allowed MIME types for images and e-books
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'application/epub+zip', 'application/x-mobipocket-ebook'];
+            if (!in_array($mime, $allowedMimes)) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['file' => ['The file must be a type: jpeg, png, webp, pdf, epub, or mobi.']]);
+            }
+
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $filePath = $file->storeAs('products', $filename, 'public');
+            $product->file_path = "products/$filename";
+
+            // Convert PDF to image if it's a PDF
+            if ($mime === 'application/pdf') {
+                try {
+                    $previewImage = $this->convertPdfToImage($file, $filename, 'products');
+                    $product->preview_image = "products/$previewImage";
+                } catch (\Exception $e) {
+                    Log::error('PDF conversion failed, proceeding with save:', [
+                        'error' => $e->getMessage(),
+                        'file' => $filename
+                    ]);
+                    $product->preview_image = null; // Save without preview if conversion fails
+                }
+            } else {
+                $product->preview_image = "products/$filename"; // Use the uploaded image directly
+            }
+        }
+
+        // Update fields
+        $product->name = $request->input('name', $product->name);
+        $product->price = $request->input('price', $product->price);
+        $product->description = $request->input('description', $product->description);        
+
+        $product->save();
+        // Log the updated product for debugging
+        Log::info('Updated Product:', $product->toArray());
+
+        return response()->json(['message' => 'Product updated successfully!', 'product' => $product]);
+    } catch (\Exception $e) {
+        Log::error('Error updating product:', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json(['message' => 'Error updating product.', 'error' => $e->getMessage()], 500);
     }
-    
 }
+    
+
+
+    
+// To generate pdf image
+public function generatePreview(Request $request)
+{
+    try {
+        if (!$request->hasFile('file') || $request->file('file')->getMimeType() !== 'application/pdf') {
+            return response()->json(['error' => 'Invalid file, PDF required'], 400);
+        }
+
+        $file = $request->file('file');
+        $filename = 'temp_' . time() . '.' . $file->getClientOriginalExtension();
+        $file->storeAs('public/temp', $filename);
+
+        $previewImage = $this->convertPdfToImage($file, $filename, 'temp');
+        $previewUrl = url("storage/temp/{$previewImage}");
+
+        // Schedule deletion of temp files
+        \Illuminate\Support\Facades\Storage::disk('public')->deleteAfter(60, "temp/{$filename}");
+        \Illuminate\Support\Facades\Storage::disk('public')->deleteAfter(60, "temp/{$previewImage}");
+
+        return response()->json(['preview_url' => $previewUrl]);
+    } catch (\Exception $e) {
+        Log::error('Preview generation failed:', ['error' => $e->getMessage()]);
+        return response()->json(['preview_url' => url('storage/default.png')], 500);
+    }
+}
+
+// Update convertPdfToImage to handle errors better
+  private function convertPdfToImage($file, $originalFilename, $subfolder = 'products')
+{
+    try {
+        // Explicitly set Ghostscript PATH for PHP environment
+        putenv('PATH=' . (getenv('PATH') ?: '') . ';C:\Program Files\gs\gs10.06.0\bin;C:\Program Files\ImageMagick-7.1.2-Q16-HDRI');
+        ini_set('imagick.pdf_delegate', 'C:\Program Files\gs\gs10.06.0\bin\gs.exe');
+        Log::info('Current PATH in convertPdfToImage:', ['path' => getenv('PATH')]); // ← ADD THIS: Debug PATH
+        Log::info('Ghostscript availability:', ['gs_path' => shell_exec('where gs')]); // ← ADD THIS: Debug gs location
+
+        $cacheKey = 'pdf_thumbnail_' . md5($originalFilename);
+        $outputFilename = pathinfo($originalFilename, PATHINFO_FILENAME) . '.jpg';
+        $thumbnailPath = storage_path("app/public/{$subfolder}/" . $outputFilename);
+
+        // Check if thumbnail exists (cache)
+        if (file_exists($thumbnailPath)) {
+            Log::info('Using cached PDF thumbnail:', ['preview_image' => $outputFilename]);
+            return $outputFilename;
+        }
+
+        $pdfPath = storage_path("app/public/{$subfolder}/" . $originalFilename);
+        if (!file_exists($pdfPath)) {
+            throw new \Exception("PDF file not found at: $pdfPath");
+        }
+
+        
+
+        $pdf = new Pdf($pdfPath);       
+        $pdf->save($thumbnailPath);
+
+        Log::info('PDF converted to image preview:', [
+            'pdf_file' => $originalFilename,
+            'preview_image' => $outputFilename
+        ]);
+
+        return $outputFilename;
+    } catch (\Exception $e) {
+        Log::error('PDF to image conversion failed:', [
+            'error' => $e->getMessage(),
+            'file' => $originalFilename,
+            'trace' => $e->getTraceAsString()
+        ]);
+        return 'default.png';
+    }
+}
+}
+
 
