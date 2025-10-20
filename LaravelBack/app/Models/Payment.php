@@ -7,5 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model
 {
-    use HasFactory;
+
+protected static function boot()
+{
+    parent::boot();
+
+    static::creating(function ($model) {
+        $model->uuid = (string) \Illuminate\Support\Str::uuid();
+    });
+}
+
 }
