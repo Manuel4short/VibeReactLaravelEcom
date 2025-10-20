@@ -19,9 +19,7 @@
 </html>
 
 <?php
-        // $pathFromDatabase = 'products/Oq1i9bj4OV9TRfbpqpLQMyojjv5fvJd3snCy4S1Q.png';
-        // $fullPath = public_path($pathFromDatabase);
-        // echo '<p>Full path of the image: '.$fullPath.'</p>';
+       
         
         
     ?>

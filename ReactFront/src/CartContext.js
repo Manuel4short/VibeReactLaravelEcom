@@ -25,11 +25,13 @@ export function CartProvider({ children }) {
             : item
         );
       } else {
-        return [...prev, { ...product, quantity: 1 }];
+        return [
+          ...prev,
+          { ...product, quantity: 1, price: Number(product.price) },
+        ];
       }
     });
   };
-
   const removeFromCart = (id) => {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };

@@ -4,7 +4,6 @@ import "./index.css";
 import reportWebVitals from "./reportWebVitals";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 import ProductList from "./components/ProductList";
 import Login from "./components/Login";
 import Register from "./components/Register";
@@ -14,17 +13,23 @@ import SearchProduct from "./components/SearchProduct";
 import Cart from "./components/Cart";
 import Protected from "./components/Protected";
 import Header from "./components/Header";
+import { CartProvider, useCart } from "./CartContext";
+import { Outlet } from "react-router-dom";
 
-import { CartProvider } from "./CartContext"; // 👈 import your context provider
-import { useCart } from "./CartContext"; // 👈 to read cart count in header
-
-function App() {
-  const { cart } = useCart(); // 👈 get cart from context
-
+const HeaderWithCart = () => {
+  const { cart } = useCart();
   return (
+    <>
+      <Header cartCount={cart.length} />
+    </>
+  );
+};
+
+const App = () => (
+  <CartProvider>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Header cartCount={cart.length} />}>
+        <Route path="/" element={<HeaderWithCart />}>
           <Route index element={<ProductList />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
@@ -49,14 +54,10 @@ function App() {
         </Route>
       </Routes>
     </BrowserRouter>
-  );
-}
-
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(
-  <CartProvider>
-    <App />
   </CartProvider>
 );
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
 
 reportWebVitals();

@@ -20,4 +20,13 @@ class Product extends Model
         'price',
         'file_path'
     ];
+
+
+    // protected $casts = [
+    //     'price' => 'decimal:10,2'
+    // ];
+
+        protected $casts = [
+        'price' => 'float'
+    ];
 }
