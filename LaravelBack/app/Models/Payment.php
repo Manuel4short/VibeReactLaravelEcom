@@ -8,13 +8,22 @@ use Illuminate\Database\Eloquent\Model;
 class Payment extends Model
 {
 
-protected static function boot()
-{
-    parent::boot();
+     protected $fillable = [
+        'order_id',
+        'amount',
+        'status',
+        'reference',
+        'payment_method',
+        'payment_id',
+    ];
 
-    static::creating(function ($model) {
-        $model->uuid = (string) \Illuminate\Support\Str::uuid();
-    });
-}
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->uuid = (string) \Illuminate\Support\Str::uuid();
+        });
+    }
 
 }

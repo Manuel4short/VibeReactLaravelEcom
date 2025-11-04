@@ -10,9 +10,7 @@ class Order extends Model
     use HasFactory;
 
   protected $fillable = [
-    'user_id',
-    'product_id',
-    'amount',
+    'user_id',    
     'status',
     'reference',
     'total_price', // ✅ Add this line
@@ -25,6 +23,17 @@ class Order extends Model
         static::creating(function ($model) {
             $model->uuid = (string) \Illuminate\Support\Str::uuid();
         });
+    }
+
+
+     public function downloads()
+    {
+        return $this->hasMany(Download::class);
+    }
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
     }
 
 

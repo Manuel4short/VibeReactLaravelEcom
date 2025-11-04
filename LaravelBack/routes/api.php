@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\DownloadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,3 +36,5 @@ Route::post('/checkout', [CheckoutController::class, 'checkout']);
 Route::post('/verify-payment', [CheckoutController::class, 'verifyPayment']);
 Route::post('/stripe-payment', [CheckoutController::class, 'stripePayment']);
 Route::post('/webhooks/stripe', [CheckoutController::class, 'stripeWebhook']);
+
+Route::get('/download/{token}', [DownloadController::class, 'downloadFile']);

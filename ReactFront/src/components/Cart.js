@@ -50,6 +50,7 @@ function Cart() {
                 total_amount: totalAmount,
                 reference: transaction.reference,
                 email,
+                payment_id: transaction.transaction,
               });
               await axios.post("http://localhost:8000/api/checkout", {
                 cart,
@@ -57,6 +58,14 @@ function Cart() {
                 total_amount: totalAmount,
                 reference: transaction.reference,
                 email, // Added to match backend validation
+                payment_id: transaction.transaction,
+              });
+
+              // 👇 Call verifyPayment immediately after
+              await axios.post("http://localhost:8000/api/verify-payment", {
+                reference: transaction.reference,
+                payment_method: "paystack",
+                email,
               });
               alert("Payment successful!");
               clearCart();

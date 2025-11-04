@@ -7,6 +7,12 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+use App\Models\Download;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
+
+
 
 class CheckoutController extends Controller
 {
@@ -14,26 +20,27 @@ class CheckoutController extends Controller
     {
         // debug_print_backtrace(); // Add this line
         try {
-            $request->validate([
-                'cart' => 'required|array',
-                'cart.*.id' => 'required|integer',
-                'cart.*.quantity' => 'required|integer|min:1',
-                'cart.*.price' => 'required|numeric|min:0',
-                'payment_method' => 'required|string|in:paystack,flutterwave,stripe,bank,cash',
-                'total_amount' => 'required|numeric|min:0',
-                'reference' => 'nullable|string',
-                'email' => 'required|email',
-            ]);
+        $request->validate([
+            'cart' => 'required|array',
+            'cart.*.id' => 'required|integer',
+            'cart.*.quantity' => 'required|integer|min:1',
+            'cart.*.price' => 'required|numeric|min:0',
+            'payment_method' => 'required|string|in:paystack,flutterwave,stripe,bank,cash',
+            'total_amount' => 'required|numeric|min:0',
+            'reference' => 'required_without:payment_id|nullable|string',
+            'payment_id' => 'required_without:reference|nullable|string',
+            'email' => 'required|email',
+        ]);
+
 
             $userId = auth()->id() ?? 1; // Fallback for testing
-            $addressId = $request->address_id ?? 1; // Later from user input
+        
 
             // Create order
             $order = Order::create([
                 'user_id' => $userId,
                 'status' => in_array($request->payment_method, ['bank', 'cash']) ? 'pending' : 'pending_payment',
-                'total_price' => $request->total_amount,
-                'address_id' => $addressId,
+                'total_price' => $request->total_amount,                
                 'reference' => $request->reference,
             ]);
 
@@ -53,7 +60,8 @@ class CheckoutController extends Controller
                 'payment_method' => $request->payment_method,
                 'amount' => $request->total_amount,
                 'status' => in_array($request->payment_method, ['bank', 'cash']) ? 'pending' : 'pending_payment',
-                'reference' => $request->reference,
+                'reference' => $request->reference ?? null,
+                'payment_id' => $request->payment_id ?? null, // 👈 Add this line
             ]);
 
             return response()->json([
@@ -71,27 +79,71 @@ class CheckoutController extends Controller
    public function verifyPayment(Request $request)
 {
     $request->validate([
-        'reference' => 'required|string',
+        'reference' => 'nullable|string',
+        'payment_id' => 'nullable|string',
         'payment_method' => 'required|string|in:paystack,flutterwave,stripe',
     ]);
 
-    $reference = $request->reference;
-    $order = Order::where('reference', $reference)->firstOrFail();
-    $payment = Payment::where('order_id', $order->id)->firstOrFail();
+    // Find the payment using Paystack’s identifiers, not your DB id
+        $payment = Payment::where('reference', $request->reference)
+            ->orWhere('payment_id', $request->payment_id)
+            ->firstOrFail();
+
+        $order = Order::findOrFail($payment->order_id);
 
     switch ($request->payment_method) {
-        case 'paystack':
+                case 'paystack':
             $secretKey = env('PAYSTACK_SECRET_KEY', '');
-            if (!$secretKey) return response()->json(['success' => false, 'message' => 'Paystack secret key missing'], 500);
+            if (!$secretKey)
+                return response()->json(['success' => false, 'message' => 'Paystack secret key missing'], 500);
+
+            $ref = $request->reference ?? $payment->reference;
             $response = Http::withToken($secretKey)
-                ->get("https://api.paystack.co/transaction/verify/{$reference}");
+                ->get("https://api.paystack.co/transaction/verify/{$ref}");
+
+
+             \Log::info('Paystack verify response', ['response' => $response->json()]);
+       
             if ($response->successful() && $response['data']['status'] === 'success') {
                 $order->status = 'paid';
                 $payment->status = 'completed';
                 $order->save();
                 $payment->save();
-                return response()->json(['success' => true, 'message' => 'Payment verified']);
+
+                $orderItems = OrderItem::where('order_id', $order->id)->get();
+                $downloadLinks = [];
+
+                foreach ($orderItems as $item) {
+                    $token = Str::random(32);
+                    $expiresAt = Carbon::now()->addDays(3);
+
+                    $download = Download::create([
+                        'product_id' => $item->product_id,
+                        'order_id' => $order->id,
+                        'file_path' => $item->product->file_path ?? null,
+                        'token' => $token,
+                        'expires_at' => $expiresAt,
+                        'used' => false,
+                    ]);
+
+                    $downloadLinks[] = url("/download/{$token}");
+                }
+
+                $linksText = implode("\n", $downloadLinks);
+                Mail::raw(
+                    "Your payment was successful! 🎉\n\nHere are your download links (valid for 3 days):\n\n{$linksText}",
+                    function ($message) use ($request) {
+                        $message->to($request->email)
+                                ->subject('Your Product Download Links');
+                    }
+                );
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment verified and download links sent to your email',
+                ]);
             }
+
             break;
 
         case 'flutterwave':
