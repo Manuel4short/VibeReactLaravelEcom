@@ -4,17 +4,18 @@ import "./index.css";
 import reportWebVitals from "./reportWebVitals";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import ProductList from "./components/ProductList";
-import Login from "./components/Login";
-import Register from "./components/Register";
-import AddProduct from "./components/AddProduct";
-import UpdateProduct from "./components/UpdateProduct";
-import SearchProduct from "./components/SearchProduct";
-import Cart from "./components/Cart";
-import Protected from "./components/Protected";
+import ProductList from "./Pages/ProductList";
+import Login from "./Pages/Login";
+import Register from "./Pages/Register";
+import AddProduct from "./Pages/AddProduct";
+import UpdateProduct from "./Pages/UpdateProduct";
+import SearchProduct from "./Pages/SearchProduct";
+import Cart from "./Pages/Cart";
+import Protected from "./Pages/Protected";
 import Header from "./components/Header";
 import { CartProvider, useCart } from "./CartContext";
 import { Outlet } from "react-router-dom";
+import Downloads from "./Pages/Downloads";
 
 const HeaderWithCart = () => {
   const { cart } = useCart();
@@ -34,6 +35,8 @@ const App = () => (
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="cart" element={<Cart />} />
+          <Route path="downloads" element={<Downloads />} />
+
           <Route
             path="add"
             element={

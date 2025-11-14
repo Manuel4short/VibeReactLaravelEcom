@@ -16,6 +16,9 @@ class Download extends Model
         'token',
         'expires_at',
         'used',
+        'download_count',
+        'buyer_email'
+
     ];
 
 

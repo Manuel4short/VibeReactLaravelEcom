@@ -37,4 +37,6 @@ Route::post('/verify-payment', [CheckoutController::class, 'verifyPayment']);
 Route::post('/stripe-payment', [CheckoutController::class, 'stripePayment']);
 Route::post('/webhooks/stripe', [CheckoutController::class, 'stripeWebhook']);
 
-Route::get('/download/{token}', [DownloadController::class, 'downloadFile']);
+Route::get('/downloads', [DownloadController::class, 'listDownloads']);
+
+
