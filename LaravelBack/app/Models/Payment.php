@@ -15,6 +15,7 @@ class Payment extends Model
         'reference',
         'payment_method',
         'payment_id',
+        'ip_address'
     ];
 
     protected static function boot()

@@ -62,6 +62,7 @@ class CheckoutController extends Controller
                 'status' => 'pending_payment',
                 'reference' => $request->reference ?? null,
                 'payment_id' => $request->payment_id ?? null, // 👈 Add this line
+                 'ip_address' => $request->ip(),  // 👈 ADD THIS
             ]);
 
             return response()->json([
@@ -77,83 +78,155 @@ class CheckoutController extends Controller
 
 public function verifyPayment(Request $request)
 {
+try {
+\Log::info('Verify payment started', $request->all());
+
+
     $request->validate([
         'reference' => 'nullable|string',
         'payment_id' => 'nullable|string',
         'payment_method' => 'required|string|in:paystack',
+        'email' => 'required|email',
     ]);
 
-    // Find the payment using reference or payment_id
+    $email = $request->input('email');
+
+    // 🔍 Log search criteria
+    \Log::info('Attempting to find payment', [
+        'reference' => $request->reference,
+        'payment_id' => $request->payment_id,
+    ]);
+
     $payment = Payment::where('reference', $request->reference)
         ->orWhere('payment_id', $request->payment_id)
         ->firstOrFail();
 
+    \Log::info('Payment record found', $payment->toArray());
+
     $order = Order::findOrFail($payment->order_id);
+    \Log::info('Order found', $order->toArray());
 
     switch ($request->payment_method) {
         case 'paystack':
-            $secretKey = env('PAYSTACK_SECRET_KEY', '');
-            if (!$secretKey)
-                return response()->json(['success' => false, 'message' => 'Paystack secret key missing'], 500);
+            $secretKey = config('services.paystack.secret');
+
+            if (!$secretKey) {
+                \Log::error('Paystack secret key is missing!');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Paystack secret key missing'
+                ], 500);
+            }
 
             $ref = $request->reference ?? $payment->reference;
+
+            \Log::info('Sending verify request to Paystack', [
+                'reference' => $ref
+            ]);
+
             $response = Http::withToken($secretKey)
                 ->get("https://api.paystack.co/transaction/verify/{$ref}");
 
-            \Log::info('Paystack verify response', ['response' => $response->json()]);
+            \Log::info('Paystack response', [
+                'status' => $response->status(),
+                'body' => $response->json()
+            ]);
 
-            if ($response->successful() && $response['data']['status'] === 'success') {
-                // ✅ Mark order and payment as completed
+            $data = $response->json();
+
+            if (
+                ($data['status'] ?? false) === true &&
+                ($data['data']['status'] ?? '') === 'success'
+            )
+            
+            
+            {
+                \Log::info('Payment successful – updating payment and order');
+
                 $order->status = 'paid';
                 $payment->status = 'completed';
+                $payment->ip_address = $payment->ip_address ?? $request->ip();
+
                 $order->save();
                 $payment->save();
 
-                // ✅ Generate downloads for all order items
                 $orderItems = OrderItem::where('order_id', $order->id)->get();
+
+                \Log::info('Generating download links', [
+                    'items_count' => $orderItems->count()
+                ]);
+
                 $downloadLinks = [];
 
-                foreach ($orderItems as $orderItem) {
+                foreach ($orderItems as $item) {
                     $token = Str::random(32);
                     $expiresAt = Carbon::now()->addDays(3);
 
                     Download::create([
-                        'product_id' => $orderItem->product_id,
+                        'product_id' => $item->product_id,
                         'order_id' => $order->id,
-                        'file_path' => $orderItem->product->file_path ?? null,
-                        'buyer_email' => $request->email,
+                        'file_path' => $item->product->file_path ?? null,
+                        'buyer_email' => $email,
                         'token' => $token,
                         'expires_at' => $expiresAt,
                         'used' => false,
+                        'buyer_ip' => $request->ip(),
+                        'download_count' => 0,
                     ]);
 
                     $downloadLinks[] = url("/download/{$token}");
+
+                    \Log::info('Download link created', [
+                        'token' => $token
+                    ]);
                 }
 
-                               // ✅ Send email with links
-                $linksText = implode("\n", $downloadLinks);
+                \Log::info('Sending download links email', [
+                    'email' => $email
+                ]);
+
                 Mail::raw(
-                    "Your payment was successful! 🎉\n\nHere are your download links:\n\n{$linksText}\n\nEach link expires in 3 days and is limited to 3 downloads.",
-                    function ($message) use ($request) {
-                        $message->to($request->email)
-                                ->subject('Your Product Download Links');
+                    "Your payment was successful! 🎉\n\nHere are your download links:\n\n" .
+                    implode("\n", $downloadLinks) .
+                    "\n\nEach link expires in 3 days and is limited to 3 downloads.",
+                    function ($message) use ($email) {
+                        $message->to($email)
+                            ->subject('Your Product Download Links');
                     }
                 );
-
 
                 return response()->json([
                     'success' => true,
                     'message' => 'Payment verified and download links sent to your email',
                 ]);
             }
-            break;
 
-        default:
-            return response()->json(['success' => false, 'message' => 'Invalid payment method'], 400);
+            \Log::warning('Payment verification failed', [
+                'reference' => $ref,
+                'response' => $response->json()
+            ]);
+
+            break;
     }
 
-    return response()->json(['success' => false, 'message' => 'Payment verification failed'], 400);
+    return response()->json([
+        'success' => false,
+        'message' => 'Payment verification failed'
+    ], 400);
+
+} catch (\Exception $e) {
+    \Log::error('Verify payment exception: ' . $e->getMessage());
+    \Log::error($e->getTraceAsString());
+
+    return response()->json([
+        'success' => false,
+        'message' => $e->getMessage()
+    ], 500);
 }
+
+
+}
+
 
 
     

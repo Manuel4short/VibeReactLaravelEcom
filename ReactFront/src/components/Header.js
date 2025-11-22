@@ -15,7 +15,7 @@ function Header({ cartCount, cart }) {
       <Navbar bg="light" expand="lg">
         <Container fluid>
           {/* Website Name */}
-          <Navbar.Brand href="/">E-com Digital</Navbar.Brand>
+          <Navbar.Brand href="/">Prime Store</Navbar.Brand>
 
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
 
@@ -71,15 +71,19 @@ function Header({ cartCount, cart }) {
                 )}
 
                 {/* Cart Button */}
-                <Nav.Link as={Link} to="/cart" className="btn btn-primary">
-                  Cart ({cartCount})
+                <Nav.Link
+                  as={Link}
+                  to="/cart"
+                  className="btn btn-success cart-btn"
+                >
+                  <i className="bi bi-cart me-1"></i>
+                  Cart (<span className="cart-count">{cartCount}</span>)
                 </Nav.Link>
               </div>
             </Nav>
           </Navbar.Collapse>
         </Container>
       </Navbar>
-      <Outlet />
     </div>
   );
 }

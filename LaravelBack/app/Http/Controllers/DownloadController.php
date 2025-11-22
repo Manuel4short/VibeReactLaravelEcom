@@ -30,23 +30,36 @@ class DownloadController extends Controller
                 return response()->json(['message' => 'File not found.'], 404);
             }
 
-            // ✅ Increase download count
-            $download->increment('download_count');
+           // Prevent double-counting accidental repeated requests 
+           if ( $download->updated_at && $download->updated_at->diffInSeconds(Carbon::now()) < 2 ) 
+              {
+                 // Do NOT increment to avoid double count
+              }
+              else {
+                 $download->download_count += 1; $download->save();
+             }
 
-            return response()->download($filePath);
+           return response()->download($filePath, null, [
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+            ]);
+
+
+
         }
 
 
 
 
-        public function listDownloads(Request $request)
-        {
-            $request->validate(['email' => 'required|email']);
+        // public function listDownloads(Request $request)
+        // {
+        //     $request->validate(['email' => 'required|email']);
 
-            $downloads = Download::where('buyer_email', $request->email)->get();
+        //     $downloads = Download::where('buyer_email', $request->email)->get();
 
-            return response()->json($downloads);
-        }
+        //     return response()->json($downloads);
+        // }
 
 
 }

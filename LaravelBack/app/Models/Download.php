@@ -17,7 +17,8 @@ class Download extends Model
         'expires_at',
         'used',
         'download_count',
-        'buyer_email'
+        'buyer_email',
+        'buyer_ip',
 
     ];
 

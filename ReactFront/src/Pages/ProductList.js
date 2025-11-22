@@ -64,10 +64,9 @@ function ProductList() {
                 </p>
                 <Button
                   onClick={() => addToCart(dataitem)}
-                  variant="success"
-                  className="w-100"
+                  className="w-100 add-to-cart-btn fw-bold"
                 >
-                  Add to Cart
+                  Add To Cart
                 </Button>
               </div>
             </div>
