@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Mail;
 use App\Models\Download;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use App\Models\EmailLog;
+
 
 
 
@@ -106,6 +109,15 @@ try {
     $order = Order::findOrFail($payment->order_id);
     \Log::info('Order found', $order->toArray());
 
+        // ✅ Prevent double processing / double email
+    if ($payment->status === 'completed') {
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment already processed',
+        ]);
+    }
+
+
     switch ($request->payment_method) {
         case 'paystack':
             $secretKey = config('services.paystack.secret');
@@ -143,57 +155,70 @@ try {
             {
                 \Log::info('Payment successful – updating payment and order');
 
-                $order->status = 'paid';
-                $payment->status = 'completed';
-                $payment->ip_address = $payment->ip_address ?? $request->ip();
-
-                $order->save();
-                $payment->save();
-
-                $orderItems = OrderItem::where('order_id', $order->id)->get();
-
-                \Log::info('Generating download links', [
-                    'items_count' => $orderItems->count()
-                ]);
-
                 $downloadLinks = [];
 
-                foreach ($orderItems as $item) {
-                    $token = Str::random(32);
-                    $expiresAt = Carbon::now()->addDays(3);
+               DB::transaction(function() use ($order, $payment, $request, $email,  &$downloadLinks ) {
+                    // Update order and payment
+                    $order->status = 'paid';
+                    $payment->status = 'completed';
+                    $payment->ip_address = $payment->ip_address ?? $request->ip();
+                    $order->save();
+                    $payment->save();
 
-                    Download::create([
-                        'product_id' => $item->product_id,
-                        'order_id' => $order->id,
-                        'file_path' => $item->product->file_path ?? null,
-                        'buyer_email' => $email,
-                        'token' => $token,
-                        'expires_at' => $expiresAt,
-                        'used' => false,
-                        'buyer_ip' => $request->ip(),
-                        'download_count' => 0,
-                    ]);
+                    // Generate download links with eager loading
+                    $orderItems = OrderItem::with('product')->where('order_id', $order->id)->get();
 
-                    $downloadLinks[] = url("/download/{$token}");
+                    
+                    foreach ($orderItems as $item) {
+                        $token = Str::random(32);
+                        $expiresAt = Carbon::now()->addDays(3);
 
-                    \Log::info('Download link created', [
-                        'token' => $token
-                    ]);
-                }
+                        Download::create([
+                            'product_id' => $item->product_id,
+                            'order_id' => $order->id,
+                            'file_path' => $item->product->file_path ?? null,
+                            'buyer_email' => $email,
+                            'token' => $token,
+                            'expires_at' => $expiresAt,
+                            'used' => false,
+                            'buyer_ip' => $request->ip(),
+                            'download_count' => 0,
+                        ]);
 
-                \Log::info('Sending download links email', [
-                    'email' => $email
-                ]);
-
-                Mail::raw(
-                    "Your payment was successful! 🎉\n\nHere are your download links:\n\n" .
-                    implode("\n", $downloadLinks) .
-                    "\n\nEach link expires in 3 days and is limited to 3 downloads.",
-                    function ($message) use ($email) {
-                        $message->to($email)
-                            ->subject('Your Product Download Links');
+                        $downloadLinks[] = url("/download/{$token}");
                     }
-                );
+
+                });
+
+                
+                    // Send email immediately (synchronous)
+                        $messageBody =
+                        "Your payment was successful! 🎉\n\n" .
+                        "Here are your download links:\n\n" .
+                        implode("\n", $downloadLinks) .
+                        "\n\nEach link expires in 3 days and is limited to 3 downloads.";
+
+                    try {
+                        Mail::raw($messageBody, function ($message) use ($email) {
+                            $message->to($email)
+                                    ->subject('Your Product Download Links');
+                        });
+                    } catch (\Throwable $e) {
+                          EmailLog::create([
+                                'email' => $email,
+                                'subject' => 'Your Product Download Links',
+                                'body' => $messageBody,
+                                'sent' => false,
+                                'error' => $e->getMessage(),
+                            ]);
+
+
+                        \Log::error('Email sending failed', [
+                            'email' => $email,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+
 
                 return response()->json([
                     'success' => true,

@@ -1,18 +1,20 @@
 import { useState } from "react";
 import axios from "axios";
+import { usePopup } from "../Contexts/PopupContext";
 
 function AddProduct() {
   const [name, setName] = useState("");
   const [file, setFile] = useState(null);
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
-  const [errors, setErrors] = useState({});
-  const [generalError, setGeneralError] = useState("");
+  const { showPopup } = usePopup();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const API_URL = "http://localhost:8000/api/addproduct";
+  const API_URL = `${import.meta.env.VITE_API_URL}/api/addproduct`;
 
   async function addProduct(e) {
     e.preventDefault();
+    setIsLoading(true);
 
     const formData = new FormData();
     formData.append("name", name);
@@ -20,29 +22,24 @@ function AddProduct() {
     formData.append("price", price);
     formData.append("description", description);
 
-    console.log("Form data:");
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
-
     try {
       const response = await axios.post(API_URL, formData);
-      alert("Product added successfully");
-      console.log("Product added:", response.data);
-      setErrors({});
-      setGeneralError("");
+      showPopup("Product added successfully"); // ✅ success popup
+      setName("");
+      setFile(null);
+      setPrice("");
+      setDescription("");
+
+      const fileInput = document.querySelector('input[type="file"]');
+      if (fileInput) fileInput.value = null;
     } catch (error) {
-      if (error.response) {
-        setErrors(
-          error.response.data.errors || {
-            general: [error.response.data.message || "An error occurred"],
-          }
-        );
-        setGeneralError(error.response.data.message || "An error occurred");
-      } else {
-        setErrors({ general: ["Something went wrong. Try again later."] });
-        setGeneralError("Something went wrong. Try again later.");
-      }
+      // show error popup, prioritizing backend message if available
+      const message =
+        error.response?.data?.message ||
+        "Something went wrong. Try again later.";
+      showPopup(message, "error");
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -50,9 +47,6 @@ function AddProduct() {
     <div className="col-sm-6 container">
       <h1>Add Product</h1>
       <form onSubmit={addProduct}>
-        {generalError && (
-          <div className="alert alert-danger">{generalError}</div>
-        )}
         <div>
           <label>Name</label>
           <input
@@ -62,7 +56,6 @@ function AddProduct() {
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-          {errors.name && <div className="text-danger">{errors.name[0]}</div>}
         </div>
         <br />
         <div>
@@ -73,7 +66,6 @@ function AddProduct() {
             accept="image/jpeg,image/png,application/pdf"
             onChange={(e) => setFile(e.target.files[0])}
           />
-          {errors.file && <div className="text-danger">{errors.file[0]}</div>}
         </div>
         <br />
         <div>
@@ -85,7 +77,6 @@ function AddProduct() {
             value={price}
             onChange={(e) => setPrice(e.target.value)}
           />
-          {errors.price && <div className="text-danger">{errors.price[0]}</div>}
         </div>
         <br />
         <div>
@@ -97,13 +88,14 @@ function AddProduct() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
-          {errors.description && (
-            <div className="text-danger">{errors.description[0]}</div>
-          )}
         </div>
         <br />
-        <button type="submit" className="form-control btn btn-primary">
-          Add Product
+        <button
+          type="submit"
+          className="form-control btn btn-primary"
+          disabled={isLoading}
+        >
+          {isLoading ? "Adding..." : "Add Product"}
         </button>
       </form>
     </div>

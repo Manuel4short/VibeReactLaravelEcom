@@ -6,10 +6,10 @@ const Protected = ({ adminRequired, children }) => {
 
   // condition check
   if (
-    !user || // if no user in localStorage
-    (adminRequired && user.role.toLowerCase() !== "admin") // if admin required but user isn’t admin
+    !user ||
+    (adminRequired && (user.role || "").toLowerCase() !== "admin") // if admin required but user isn’t admin
   ) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
 
   return children;

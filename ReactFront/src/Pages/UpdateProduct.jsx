@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
+import { usePopup } from "../Contexts/PopupContext";
 
 function UpdateProduct() {
   const [data, setData] = useState([]);
@@ -9,15 +10,19 @@ function UpdateProduct() {
   const [description, setDescription] = useState("");
   const [file, setFile] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
-  const [productId, setProductId] = useState("");
+  const [productId, setProductId] = useState(null);
+  const { showPopup } = usePopup();
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/api/list");
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/list`
+        );
         setData(response.data);
       } catch (error) {
         console.error("Error fetching product data:", error);
+        showPopup("Failed to load products.", "error");
       }
     };
     fetchProducts();
@@ -25,6 +30,9 @@ function UpdateProduct() {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
+
+    // ⛔ Prevent re-processing the same file
+    if (file === selectedFile) return;
     setFile(selectedFile);
     if (selectedFile) {
       const reader = new FileReader();
@@ -39,7 +47,7 @@ function UpdateProduct() {
   };
 
   const handleProductChange = (e) => {
-    const selectedId = parseInt(e.target.value);
+    const selectedId = parseInt(e.target.value, 10);
     setProductId(selectedId);
     const selectedProduct = data.find((product) => product.id === selectedId);
     if (selectedProduct) {
@@ -48,14 +56,23 @@ function UpdateProduct() {
       setDescription(selectedProduct.description || "");
       setImageUrl(
         selectedProduct.file_path
-          ? `http://localhost:8000/storage/${selectedProduct.file_path}`
+          ? `${import.meta.env.VITE_API_URL}/storage/${
+              selectedProduct.file_path
+            }`
           : ""
       );
+      // ✅ Clear previous file when switching products
+      setFile(null);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!productId) {
+      showPopup("Please select a product.", "error"); // optional
+      return;
+    }
     const formData = new FormData();
     formData.append("name", name);
     formData.append("price", price);
@@ -64,13 +81,8 @@ function UpdateProduct() {
 
     try {
       const response = await axios.post(
-        `http://localhost:8000/api/product/${productId}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        `${import.meta.env.VITE_API_URL}/api/product/${productId}`,
+        formData
       );
       if (response.status === 200) {
         const updatedProduct = response.data.product;
@@ -82,7 +94,9 @@ function UpdateProduct() {
           updatedProduct.file_path.endsWith(".webp")
         ) {
           setImageUrl(
-            `http://localhost:8000/storage/${updatedProduct.file_path}`
+            `${import.meta.env.VITE_API_URL}/storage/${
+              updatedProduct.file_path
+            }`
           );
         } else {
           setImageUrl(""); // Clear for PDF or other non-image files
@@ -92,12 +106,13 @@ function UpdateProduct() {
             prod.id === updatedProduct.id ? updatedProduct : prod
           )
         );
-        alert("Product updated successfully!");
+        showPopup("Product updated successfully!");
       } else {
         console.error("Error updating product:", response.status);
       }
     } catch (error) {
       console.error("Error updating product:", error);
+      showPopup("Update failed. Try again.", "error");
     }
   };
 

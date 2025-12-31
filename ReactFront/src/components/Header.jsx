@@ -37,6 +37,9 @@ function Header({ cartCount, cart }) {
                     <Nav.Link as={Link} to="/update" className="me-3">
                       Update Products
                     </Nav.Link>
+                    <Nav.Link as={Link} to="/delete">
+                      Delete Products
+                    </Nav.Link>
                   </>
                 )}
 

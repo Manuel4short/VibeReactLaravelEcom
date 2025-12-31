@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
 
     protected $commands = [
         \App\Console\Commands\CleanupProductFiles::class,
+        \App\Console\Commands\RetryFailedEmails::class,
     ];
 
 
@@ -29,6 +30,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         $schedule->command('cleanup:product-files')->daily();
+        $schedule->command('emails:retry')->everyFiveMinutes();
     }
 
     /**

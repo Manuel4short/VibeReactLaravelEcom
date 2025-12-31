@@ -37,12 +37,29 @@ class UserController extends Controller
             return response()->json(['error' => 'Password is incorrect'], 401);
         }
 
+
+        // ✅ Generate token using Sanctum
+         $token = $user->createToken('auth_token')->plainTextToken;
+
+
         // Return user info, including role
         return response()->json([
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role, // Include role in the response
+            'token' => $token,       // <- this is what frontend will store
         ]);
     }
+
+    public function logout(Request $request)
+        {
+            // Delete ONLY the token used in this request
+            $request->user()->currentAccessToken()->delete();
+
+            return response()->json([
+                'message' => 'Logged out successfully'
+            ]);
+        }
+
 }

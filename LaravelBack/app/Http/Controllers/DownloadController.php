@@ -51,15 +51,4 @@ class DownloadController extends Controller
 
 
 
-
-        // public function listDownloads(Request $request)
-        // {
-        //     $request->validate(['email' => 'required|email']);
-
-        //     $downloads = Download::where('buyer_email', $request->email)->get();
-
-        //     return response()->json($downloads);
-        // }
-
-
 }

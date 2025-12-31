@@ -1,35 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useCart } from "../CartContext";
 import axios from "axios";
 import PaystackPop from "@paystack/inline-js";
+import { usePopup } from "../Contexts/PopupContext"; // add this
 
 function Cart() {
   const { cart, removeFromCart, clearCart } = useCart();
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
+  const { showPopup } = usePopup();
+
   const formatPrice = (amount) => Math.round(amount * 100) / 100;
+
+  const handleRemove = (id) => {
+    removeFromCart(id);
+    showPopup("Item removed from cart"); // optional popup
+  };
 
   if (cart.length === 0) {
     return <div className="text-center mt-5">Your cart is empty.</div>;
   }
 
-  const totalAmount = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const totalAmount = useMemo(() => {
+    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  }, [cart]);
 
   const handleCheckout = async () => {
+    if (isLoading) return; // 👈 ADD THIS
     setIsLoading(true);
     try {
       if (!email) {
-        alert("Please enter an email address");
+        showPopup("Please enter an email address", "error");
         setIsLoading(false);
         return;
       }
 
       const paystack = new PaystackPop();
       paystack.newTransaction({
-        key: process.env.REACT_APP_PAYSTACK_KEY,
+        key: import.meta.env.VITE_PAYSTACK_KEY,
         amount: totalAmount * 100,
         email,
         allowIframeFocus: true,
@@ -39,7 +47,7 @@ function Cart() {
           try {
             console.log("Payment successful, creating order...");
 
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/checkout`, {
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/checkout`, {
               cart,
               payment_method: "paystack",
               reference: transaction.reference,
@@ -51,7 +59,7 @@ function Cart() {
             console.log("Order created, verifying payment...");
 
             const verifyResponse = await axios.post(
-              `${process.env.REACT_APP_API_URL}/api/verify-payment`,
+              `${import.meta.env.VITE_API_URL}/api/verify-payment`,
               {
                 reference: transaction.reference,
                 payment_method: "paystack",
@@ -61,22 +69,28 @@ function Cart() {
 
             console.log("Verify response:", verifyResponse.data);
 
-            alert("Payment successful!");
+            showPopup("Payment successful!");
             clearCart();
+            setIsLoading(false);
           } catch (err) {
             console.error("Full error:", err);
             console.error("Error response:", err.response?.data);
             console.error("Error status:", err.response?.status);
-            alert(`Error: ${err.response?.data?.message || err.message}`);
+            showPopup(
+              `Error: ${err.response?.data?.message || err.message}`,
+              "error"
+            );
+            setIsLoading(false); // ✅ ADD THIS
           }
         },
-        onCancel: () => alert("Payment cancelled"),
+        onCancel: () => {
+          showPopup("Payment cancelled");
+          setIsLoading(false);
+        },
       });
     } catch (error) {
       console.error("Checkout error:", error);
-      alert(`Checkout failed: ${error.message}`);
-    } finally {
-      setIsLoading(false);
+      showPopup(`Checkout failed: ${error.message}`, "error");
     }
   };
   return (
@@ -89,8 +103,9 @@ function Cart() {
           <div className="col-md-3 col-sm-6 mb-4" key={item.id}>
             <div className="card shadow-sm small-card">
               <img
+                loading="lazy"
                 className="card-img-top"
-                src={`${process.env.REACT_APP_API_URL}/storage/${
+                src={`${import.meta.env.VITE_API_URL}/storage/${
                   item.preview_image || item.file_path
                 }`}
                 alt={item.name}
@@ -105,7 +120,7 @@ function Cart() {
                 </p>
                 <button
                   className="btn btn-sm btn-danger w-100"
-                  onClick={() => removeFromCart(item.id)}
+                  onClick={() => handleRemove(item.id)}
                 >
                   Remove
                 </button>

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { usePopup } from "../Contexts/PopupContext";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const { showPopup } = usePopup();
 
   useEffect(() => {
     if (localStorage.getItem("user-info")) {
-      navigate("/add");
+      navigate("/");
     }
   }, [navigate]);
 
@@ -20,7 +22,7 @@ function Login() {
     let item = { email, password };
 
     try {
-      let result = await fetch("http://localhost:8000/api/login", {
+      let result = await fetch(`${import.meta.env.VITE_API_URL}/api/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -32,6 +34,8 @@ function Login() {
       let data = await result.json();
 
       if (result.ok) {
+        // save token
+        localStorage.setItem("token", data.token);
         // Check if the response status is OK
         // Store user info including role
         localStorage.setItem(
@@ -45,16 +49,16 @@ function Login() {
         );
 
         // Navigate to another page
-        navigate("/add");
-        alert("You have been logged in");
+        navigate("/");
+        showPopup("You have been logged in");
       } else {
         // Handle error responses from the server
-        alert(data.error || "Login failed");
+        showPopup(data.error || "Login failed");
       }
     } catch (error) {
       // Handle fetch errors
       console.error("Error:", error);
-      alert("An error occurred during login");
+      showPopup("An error occurred during login", "error");
     }
   }
 
@@ -79,7 +83,7 @@ function Login() {
         <button
           onClick={login}
           className="form-control btn btn-primary"
-          type="submit"
+          type="button"
         >
           Login
         </button>

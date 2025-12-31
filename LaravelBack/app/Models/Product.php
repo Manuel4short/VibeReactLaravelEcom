@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 
 class Product extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -22,10 +25,6 @@ class Product extends Model
     ];
 
 
-    // protected $casts = [
-    //     'price' => 'decimal:10,2'
-    // ];
-
         protected $casts = [
         'price' => 'float'
     ];
@@ -38,5 +37,11 @@ class Product extends Model
             $model->uuid = (string) \Illuminate\Support\Str::uuid();
         });
     }
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
 
 }

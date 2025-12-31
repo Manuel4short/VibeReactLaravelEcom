@@ -26,7 +26,7 @@ Route::post('register', [UserController::class, 'register']);
 Route::post('login', [UserController::class, 'login']);
 Route::post('addproduct', [ProductController::class, 'addProduct']);
 Route::get('list', [ProductController::class, 'list']);
-Route::delete('delete/{id}', [ProductController::class, 'delete']);
+// Route::delete('delete/{id}', [ProductController::class, 'delete']);
 Route::get('search/{key}', [ProductController::class, 'searchProduct']);
 Route::get('product/{id}', [ProductController::class, 'getProduct']);
 Route::post('product/{id}', [ProductController::class, 'update']);
@@ -39,4 +39,9 @@ Route::post('/webhooks/stripe', [CheckoutController::class, 'stripeWebhook']);
 
 Route::get('/downloads', [DownloadController::class, 'listDownloads']);
 
+Route::delete('delete/{id}', [ProductController::class, 'delete'])
+->middleware(['auth:sanctum', 'is_admin']);
+
+Route::post('logout', [UserController::class, 'logout'])
+->middleware('auth:sanctum');
 

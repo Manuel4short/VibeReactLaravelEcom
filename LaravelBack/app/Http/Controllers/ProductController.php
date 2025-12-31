@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Spatie\PdfToImage\Pdf; // ← ADD THIS
 use Illuminate\Support\Facades\Storage; // ← ADD THIS
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Cache;
+
 
 
 class ProductController extends Controller
@@ -72,6 +75,9 @@ class ProductController extends Controller
 
                 $product->save();
 
+                // 🔥 clear cached product list
+                Cache::forget('all_products');
+
                 Log::info('Product saved:', $product->toArray());
 
                 return response()->json(['message' => 'Product added successfully', 'product' => $product], 201);
@@ -86,11 +92,21 @@ class ProductController extends Controller
             return response()->json(['message' => 'Internal Server Error', 'error' => $e->getMessage()], 500);
         }
     }
-    public function list()
-    {
-        return response()->json(Product::all());
-    }
-    
+         public function list()
+        {
+         $products = Cache::remember('all_products', 60 * 60, function () {
+                return Product::select(
+                    'id',
+                    'name',
+                    'price',
+                    'description',
+                    'preview_image',
+                    'file_path'
+                )->get();
+            });
+
+            return response()->json($products);
+        }
 
     public function delete($id)
     {
@@ -102,13 +118,23 @@ class ProductController extends Controller
                 // Delete the product
                 $product->delete();
 
+                // 🔥 clear cache
+                Cache::forget('all_products');
+
                 // Return success response
                 return response()->json(['message' => 'Product deleted successfully'], 200);
             } else {
                 // Return error if product not found
                 return response()->json(['message' => 'Product not found'], 404);
             }
-        } catch (\Exception $e) {
+        } catch (QueryException $e) {
+        // DB-related errors ONLY
+        return response()->json([
+            'message' => 'Database constraint error. Product may be linked to orders.'
+        ], 409);
+
+    }
+        catch (\Exception $e) {
             \Log::error('Error:', ['exception' => $e]);
             // Catch any exceptions and return a 500 error
             return response()->json(['message' => 'Internal Server Error', 'error' => $e->getMessage()], 500);
@@ -208,6 +234,9 @@ class ProductController extends Controller
         $product->description = $request->input('description', $product->description);        
 
         $product->save();
+
+        Cache::forget('all_products');
+
         // Log the updated product for debugging
         Log::info('Updated Product:', $product->toArray());
 
