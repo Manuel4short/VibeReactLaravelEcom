@@ -50,7 +50,7 @@ function SearchProduct() {
 
   return (
     <div className="container mt-3 d-flex flex-column align-items-center">
-      <h1 className="mb-4">Search Product</h1>
+      <h3 className="mb-4">Search Product</h3>
 
       <input
         type="text"
@@ -73,21 +73,23 @@ function SearchProduct() {
               className="mb-4 shadow-sm"
               style={{ width: "18rem", margin: "10px" }}
             >
-              <Card.Img
-                variant="top"
-                loading="lazy"
-                src={`${import.meta.env.VITE_API_URL}/storage/${
-                  product.preview_image || product.file_path
-                }`}
-                alt={product.name}
-                style={{
-                  height: "200px",
-                  objectFit: "contain",
-                  width: "100%",
-                  padding: "10px",
-                }}
-                onError={(e) => (e.target.src = "/default.png")}
-              />
+              <div className="card-img-box">
+                <Card.Img
+                  variant="top"
+                  loading="lazy"
+                  src={`${import.meta.env.VITE_API_URL}/storage/${
+                    product.preview_image || product.file_path
+                  }`}
+                  alt={product.name}
+                  style={{
+                    height: "200px",
+                    objectFit: "contain",
+                    width: "100%",
+                    padding: "10px",
+                  }}
+                  onError={(e) => (e.target.src = "/default.png")}
+                />
+              </div>
               <Card.Body className="d-flex flex-column">
                 <Card.Title className="text-truncate" title={product.name}>
                   {product.name}

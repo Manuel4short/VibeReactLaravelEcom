@@ -44,60 +44,65 @@ function AddProduct() {
   }
 
   return (
-    <div className="col-sm-6 container">
-      <h1>Add Product</h1>
-      <form onSubmit={addProduct}>
-        <div>
-          <label>Name</label>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+    <div className=" container">
+      <div className="row justify-content-center">
+        <div className="col-12 col-sm-9 col-md-7 col-lg-5">
+          <h3>Add Product</h3>
+          <form onSubmit={addProduct}>
+            <div>
+              <label>Name</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <br />
+            <div>
+              <label>File (JPG, PNG, or PDF)</label>
+              <input
+                type="file"
+                className="form-control"
+                accept="image/jpeg,image/png,application/pdf"
+                onChange={(e) => setFile(e.target.files[0])}
+              />
+            </div>
+            <br />
+            <div>
+              <label>Price</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Price"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+              />
+            </div>
+            <br />
+            <div>
+              <label>Description</label>
+              <textarea
+                type="text"
+                className="form-control"
+                placeholder="Description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3} // height of the box
+              ></textarea>
+            </div>
+            <br />
+            <button
+              type="submit"
+              className="form-control btn btn-primary"
+              disabled={isLoading}
+            >
+              {isLoading ? "Adding..." : "Add Product"}
+            </button>
+          </form>
         </div>
-        <br />
-        <div>
-          <label>File (JPG, PNG, or PDF)</label>
-          <input
-            type="file"
-            className="form-control"
-            accept="image/jpeg,image/png,application/pdf"
-            onChange={(e) => setFile(e.target.files[0])}
-          />
-        </div>
-        <br />
-        <div>
-          <label>Price</label>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Price"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-          />
-        </div>
-        <br />
-        <div>
-          <label>Description</label>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-        <br />
-        <button
-          type="submit"
-          className="form-control btn btn-primary"
-          disabled={isLoading}
-        >
-          {isLoading ? "Adding..." : "Add Product"}
-        </button>
-      </form>
+      </div>
     </div>
   );
 }

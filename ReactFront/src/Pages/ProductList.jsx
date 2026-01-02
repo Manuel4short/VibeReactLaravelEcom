@@ -33,9 +33,9 @@ function ProductList() {
 
   return (
     <div className="container-fluid ">
-      <h4 className="text-center mb-4" style={{ fontStyle: "italic" }}>
+      {/* <h4 className="text-center mb-4" style={{ fontStyle: "italic" }}>
         Products Listed Here
-      </h4>
+      </h4> */}
 
       <div className="row">
         {data.map((product) => (
@@ -44,21 +44,23 @@ function ProductList() {
             key={product.id}
           >
             <div className="card shadow-sm">
-              <img
-                loading="lazy"
-                className="card-img-top "
-                src={`${import.meta.env.VITE_API_URL}/storage/${
-                  product.preview_image || product.file_path
-                }`}
-                alt={product.name}
-                style={{
-                  height: "200px",
-                  objectFit: "contain",
-                  width: "100%",
-                  paddingTop: "10px",
-                }}
-                onError={(e) => (e.target.src = "/default.png")}
-              />
+              <div className="card-img-box">
+                <img
+                  loading="lazy"
+                  className="card-img-top product-image"
+                  src={`${import.meta.env.VITE_API_URL}/storage/${
+                    product.preview_image || product.file_path
+                  }`}
+                  alt={product.name}
+                  style={{
+                    height: "200px",
+                    // objectFit: "contain",
+                    width: "100%",
+                    // paddingTop: "10px",
+                  }}
+                  onError={(e) => (e.target.src = "/default.png")}
+                />
+              </div>
               <div className="card-body">
                 <h5 className="card-title">{product.name}</h5>
                 <p className="card-text">{product.description}</p>

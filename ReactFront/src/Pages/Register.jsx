@@ -69,7 +69,7 @@ function Register() {
         placeholder="email"
       />
       <br />
-      <button onClick={signUp} className="btn btn-primary offset-5">
+      <button onClick={signUp} className="btn btn-primary d-block mx-auto">
         Submit
       </button>
     </div>

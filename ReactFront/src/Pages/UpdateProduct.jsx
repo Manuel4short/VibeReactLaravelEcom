@@ -118,10 +118,8 @@ function UpdateProduct() {
 
   return (
     <>
-      <div className="container mt-3">
-        <h3 className="text-center mb-2" style={{ fontSize: "1.5rem" }}>
-          Update Product
-        </h3>
+      <div className="container mt-1">
+        <h3 className="text-center ">Update Product</h3>
         <form
           onSubmit={handleSubmit}
           className="border p-2 rounded shadow mx-auto mb-4"
