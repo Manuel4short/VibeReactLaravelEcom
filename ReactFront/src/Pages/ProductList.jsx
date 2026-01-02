@@ -66,7 +66,10 @@ function ProductList() {
                   <strong>₦{Number(product.price).toLocaleString()}</strong>
                 </p>
                 <Button
-                  onClick={() => addToCart(product)}
+                  onClick={() => {
+                    addToCart(product);
+                    showPopup(`${product.name} added to cart!`);
+                  }}
                   className="w-100 add-to-cart-btn fw-bold"
                 >
                   Add To Cart

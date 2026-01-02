@@ -1,6 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
-// import "./components/App.css";
+import "./components/App.css";
 import { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import Layout from "./components/Layout";

@@ -16,6 +16,7 @@ export const PopupProvider = ({ children }) => {
       {children}
       {popup.message && (
         <div
+          className="popup"
           style={{
             position: "fixed",
             top: "50%", // vertical center

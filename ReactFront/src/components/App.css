@@ -3,9 +3,10 @@
 }
 
 .Navbar_wrapper a {
-  padding-left: 20px;
+  /* padding-left: 20px;
   padding-right: 20px;
-  padding-top: 20px;
+  padding-top: 20px; */
+  padding: 0 20px; /* only left/right */
   text-decoration: none;
   color: rgb(22, 20, 20);
 }
@@ -106,7 +107,6 @@
 .btn {
   padding: 10px 10px; /* Increase padding horizontally for wider buttons */
   font-size: 14px; /* Increase font size for better readability */
-  width: 150px; /* Make the button take up the full width of the container */
   text-align: center; /* Ensure the text is centered within the button */
 }
 
@@ -151,11 +151,27 @@ nav .cart-btn.btn-success:focus {
   justify-content: space-between;
 }
 
-/* .navbar-brand {
-  font-size: 1.3rem; 
-}  */
-
-/* .navbar-nav .nav-link,
 .navbar-text {
-  font-size: 1rem; 
-} */
+  line-height: 1.2;
+  font-size: 0.9rem;
+  /* margin-right: 28px; */
+}
+
+@keyframes popupSwing {
+  0% {
+    transform: translate(-50%, -60%) scale(0.9);
+    opacity: 0;
+  }
+  60% {
+    transform: translate(-50%, -48%) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.popup {
+  /* animation: popupSwing 0.35s ease-out; */
+  animation: popupSwing 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}

@@ -23,7 +23,8 @@ function Header({ cartCount, cart }) {
             {/* Single Nav Container for Proper Spacing */}
             <Nav className="w-100 d-flex justify-content-between align-items-center">
               {/* Left-side Links */}
-              <div className="d-flex align-items-center  ms-5 ps-5">
+              {/* <div className="d-flex align-items-center  ms-5 ps-5"> */}
+              <div className="d-flex align-items-center ms-4 ">
                 <Nav.Link as={Link} to="/" className="me-3">
                   Product List
                 </Nav.Link>
@@ -49,25 +50,25 @@ function Header({ cartCount, cart }) {
               </div>
 
               {/* Right-side: User & Cart */}
-              <div className="d-flex align-items-center">
+              <div className="d-flex align-items-center ">
                 {user ? (
                   <>
-                    <span className="navbar-text me-3">
+                    <span className="navbar-text me-5">
                       Welcome, {user.name}
                     </span>
                     <Nav.Link
                       onClick={logOut}
-                      className="btn btn-outline-danger me-3"
+                      className="btn btn-outline-danger me-4"
                     >
                       Logout
                     </Nav.Link>
                   </>
                 ) : (
                   <>
-                    <Nav.Link as={Link} to="/login" className="me-3">
+                    <Nav.Link as={Link} to="/login" className="me-4">
                       Login
                     </Nav.Link>
-                    <Nav.Link as={Link} to="/register" className="me-3">
+                    <Nav.Link as={Link} to="/register" className="me-4">
                       Register
                     </Nav.Link>
                   </>
