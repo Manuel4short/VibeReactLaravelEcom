@@ -197,3 +197,17 @@ nav .cart-btn.btn-success:focus {
   justify-content: center;
   background: #f8f9fa;
 }
+
+.navbar .nav-link {
+  color: #222;
+  transition: color 0.2s ease;
+}
+
+.navbar .nav-link:hover {
+  color: #6fcf97; /* your hover color */
+}
+
+.navbar .nav-link.active {
+  color: #6fcf97;
+  font-weight: 500;
+}
